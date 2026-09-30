@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B10+C10 获取返利看板 · 华南大区</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --card:#ffffff; --line:#e3e8ef; --line2:#eef1f6;
+    --text:#1f2937; --muted:#6b7280; --soft:#9ca3af;
+    --red:#d93025; --green:#1e8e3e; --amber:#e08700; --blue:#1e40af; --indigo:#4f46e5;
+    --t1500:#b8860b; --t1000:#1e40af; --t500:#0e7490; --t0:#9ca3af;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1440px;margin:0 auto;padding:20px 22px 60px}
+  header.top{background:linear-gradient(100deg,#111827 0%,#1e3a8a 55%,#2563eb 100%);
+    color:#fff;border-radius:14px;padding:22px 26px;margin-bottom:16px;
+    box-shadow:0 6px 20px rgba(30,58,138,.18)}
+  header.top h1{margin:0;font-size:23px;font-weight:700;letter-spacing:.5px}
+  header.top .sub{margin-top:7px;font-size:13px;color:#dbeafe;opacity:.95}
+  header.top .tags{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px}
+  .tag{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);
+    border-radius:999px;padding:3px 12px;font-size:12px;color:#eff6ff}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(16,24,40,.05)}
+  .card h2{margin:0 0 12px;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;
+    border-left:4px solid var(--indigo);padding-left:9px}
+  .card h2 .hint{font-weight:400;font-size:12px;color:var(--muted);margin-left:auto}
+  /* 筛选 */
+  .filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .fgroup{display:flex;align-items:center;gap:6px}
+  .fgroup label{font-size:12px;color:var(--muted);white-space:nowrap}
+  select,input[type=text]{border:1px solid var(--line);border-radius:8px;padding:6px 10px;
+    font-size:13px;background:#fff;color:var(--text);outline:none;font-family:inherit}
+  select:focus,input[type=text]:focus{border-color:var(--indigo)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{border:1px solid var(--line);background:#fff;color:#374151;border-radius:999px;
+    padding:4px 12px;font-size:12.5px;cursor:pointer;transition:.15s;user-select:none}
+  .chip:hover{border-color:var(--indigo);color:var(--indigo)}
+  .chip.on{background:var(--indigo);border-color:var(--indigo);color:#fff}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 14px;
+    font-size:13px;cursor:pointer;color:#374151;font-family:inherit}
+  .btn:hover{border-color:var(--indigo);color:var(--indigo)}
+  .btn.primary{background:var(--indigo);border-color:var(--indigo);color:#fff}
+  .btn.primary:hover{opacity:.9;color:#fff}
+  /* KPI */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden}
+  .kpi .k{font-size:12px;color:var(--muted)}
+  .kpi .v{font-size:24px;font-weight:700;margin-top:6px;letter-spacing:-.3px}
+  .kpi .d{font-size:12px;color:var(--soft);margin-top:4px}
+  .kpi.money .v{color:var(--red)}
+  .kpi::after{content:"";position:absolute;right:0;top:0;bottom:0;width:3px;background:var(--indigo);opacity:.75}
+  .kpi.money::after{background:var(--red)}
+  .kpi.ok::after{background:var(--green)}
+  .kpi.warn::after{background:var(--amber)}
+  /* 结构条 */
+  .stack{display:flex;height:26px;border-radius:6px;overflow:hidden;background:#f1f5f9}
+  .stack span{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:12px;color:#374151}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
+  /* 条形图 */
+  .bars{display:flex;flex-direction:column;gap:9px}
+  .bar{display:flex;align-items:center;gap:10px}
+  .bar .nm{width:96px;font-size:13px;text-align:right;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar .track{flex:1;background:#f1f5f9;border-radius:6px;height:24px;position:relative;overflow:hidden}
+  .bar .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#2563eb,#dc2626);min-width:2px;transition:width .4s}
+  .bar .val{width:120px;font-size:13px;font-weight:600;color:var(--red);white-space:nowrap}
+  .bar .ex{width:132px;font-size:12px;color:var(--muted);white-space:nowrap}
+  /* tabs */
+  .tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:12px;flex-wrap:wrap}
+  .tab{border:none;background:none;padding:9px 16px;font-size:14px;color:var(--muted);cursor:pointer;
+    border-bottom:2px solid transparent;font-family:inherit}
+  .tab.on{color:var(--indigo);border-bottom-color:var(--indigo);font-weight:600}
+  /* table */
+  .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+  table{border-collapse:collapse;width:100%;font-size:13px;background:#fff;white-space:nowrap}
+  th,td{padding:9px 12px;border-bottom:1px solid var(--line2);text-align:right}
+  th{background:#f8fafc;color:#475569;font-weight:600;font-size:12.5px;position:sticky;top:0;cursor:pointer;
+     user-select:none;z-index:1}
+  th.left,td.left{text-align:left}
+  th:hover{color:var(--indigo)}
+  th .ar{color:var(--indigo);font-size:10px;margin-left:2px}
+  tbody tr:hover{background:#f8fafc}
+  tbody tr.tot{background:#f1f5f9;font-weight:700}
+  tbody tr.tot td{border-top:2px solid var(--line)}
+  .num{font-variant-numeric:tabular-nums}
+  .r-hi{color:var(--red);font-weight:600}
+  .r-md{color:var(--amber);font-weight:600}
+  .r-lo{color:var(--green);font-weight:600}
+  .muted{color:var(--soft)}
+  .badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:600;line-height:18px}
+  .b1500{background:#fef3c7;color:#92400e}
+  .b1000{background:#dbeafe;color:#1e40af}
+  .b500{background:#cffafe;color:#155e75}
+  .b0{background:#f1f5f9;color:#64748b}
+  .byes{background:#fee2e2;color:#b91c1c}
+  .bno{background:#f1f5f9;color:#64748b}
+  .hide{display:none}
+  /* 洞察 */
+  .insights{margin:0;padding-left:18px;font-size:13.5px;color:#334155}
+  .insights li{margin:5px 0}
+  .insights b{color:var(--red)}
+  details.rule{margin-top:10px;font-size:13px;color:#334155}
+  details.rule summary{cursor:pointer;color:var(--indigo);font-weight:600;outline:none}
+  details.rule ul{margin:8px 0 0;padding-left:18px;color:#475569;line-height:1.75}
+  .note{font-size:12px;color:var(--muted);margin-top:8px}
+  @media (max-width:640px){
+    .bar .ex{display:none}.bar .nm{width:74px}.wrap{padding:14px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>B10 + C10 获取返利看板</h1>
+    <div class="sub">华南大区 · 统计周期 2026年9月 · 主体口径：同城市同实际控制人 · 数据导出 2026-09-30 20:06</div>
+    <div class="tags">
+      <span class="tag">锁单口径：11月1日锁定9月数据</span>
+      <span class="tag">返利 = 9月B10&amp;C10交付台数 × 锁单达成档位</span>
+      <span class="tag">档位：120%→1500 / 100%→1000 / 80%→500 / &lt;80%→0</span>
+    </div>
+  </header>
+
+  <!-- 筛选 -->
+  <div class="card">
+    <h2>筛选条件<span class="hint">支持按零售经理、城市、档位、开关项组合筛选，下方所有模块联动</span></h2>
+    <div class="filters">
+      <div class="fgroup"><label>零售高级经理</label></div>
+      <div class="chips" id="rmChips"></div>
+    </div>
+    <div class="filters" style="margin-top:12px">
+      <div class="fgroup"><label>省份</label><select id="fPv"><option value="">全部</option></select></div>
+      <div class="fgroup"><label>城市</label><select id="fCt"><option value="">全部</option></select></div>
+      <div class="fgroup"><label>主体类型</label><select id="fTp"><option value="">全部</option></select></div>
+      <div class="fgroup"><label>当前档位</label><select id="fTr">
+        <option value="">全部</option><option value="1500">1500 元/台</option><option value="1000">1000 元/台</option>
+        <option value="500">500 元/台</option><option value="0">0 元/台</option></select></div>
+      <div class="fgroup"><label>开关项</label><select id="fSw">
+        <option value="">全部</option><option value="是">已达成</option><option value="否">未达成</option></select></div>
+      <div class="fgroup"><label>搜索</label><input type="text" id="fQ" placeholder="主体 / 城市 / 经理" style="width:180px"></div>
+      <button class="btn" id="btnReset">重置</button>
+      <button class="btn primary" id="btnExport">导出当前明细 CSV</button>
+    </div>
+  </div>
+
+  <!-- KPI -->
+  <div class="card">
+    <h2>核心指标<span class="hint" id="kpiHint"></span></h2>
+    <div class="kpis" id="kpis"></div>
+  </div>
+
+  <!-- 洞察 + 口径 -->
+  <div class="card">
+    <h2>关键结论</h2>
+    <ul class="insights" id="insights"></ul>
+    <details class="rule">
+      <summary>返利口径说明（点击展开）</summary>
+      <ul>
+        <li><b>档位判定</b>：按「当期净增锁单达成率」——≥120% 为 1500 元/台，≥100% 为 1000 元/台，≥80% 为 500 元/台，&lt;80% 为 0 元/台。经全部 55 条主体数据反推校验，吻合率 100%。</li>
+        <li><b>预估激励金额</b> = 9月 B10&amp;C10 交付实际台数 × 该主体档位单价。</li>
+        <li><b>开关项</b>：交付达成率 ≥80% 且 8月/9月新增锁单退订率 ≤20% 判定为达成（55 条数据反推校验，吻合率 100%）。</li>
+        <li><b>距下一档位缺口</b> = 按下一档达成率门槛反算所需台数 − 当期实际台数；<b>潜在增益</b> = 交付实际 ×（上一档单价 − 当前档位单价）。</li>
+        <li><b>回看口径</b>：27年1月1日回看与11月1日核算当前完全一致（<span id="sameCnt"></span> 行比对无差异），看板中「8月/9月退订」采用 11月1日核算口径。</li>
+        <li><b>配色</b>：遵循国内阅读习惯，数值越高越红（达成率达标为红、退订率超标为红），低值为绿。</li>
+      </ul>
+    </details>
+  </div>
+
+  <!-- 图表 -->
+  <div class="card">
+    <h2>零售高级经理 · 预估返利金额排名<span class="hint">条形长度＝预估激励金额</span></h2>
+    <div class="bars" id="bars"></div>
+  </div>
+
+  <div class="card">
+    <h2>档位结构分布<span class="hint">主体数占比 / 返利金额占比</span></h2>
+    <div class="stack" id="stackN"></div>
+    <div class="stack" id="stackM" style="margin-top:8px"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <!-- 分表 -->
+  <div class="card">
+    <div class="tabs">
+      <button class="tab on" data-tab="rm">零售经理汇总</button>
+      <button class="tab" data-tab="dt">主体明细查询</button>
+      <button class="tab" data-tab="ch">冲刺升档机会</button>
+      <button class="tab" data-tab="rf">退订情况分析</button>
+    </div>
+
+    <div id="pane-rm">
+      <div class="scroll"><table id="tRm"></table></div>
+      <div class="note">点击表头可排序；档位分布按 1500 / 1000 / 500 / 0 元每档主体数排列。</div>
+    </div>
+
+    <div id="pane-dt" class="hide">
+      <div class="scroll"><table id="tDt"></table></div>
+      <div class="note">支持表头排序；右上角「导出当前明细 CSV」导出当前筛选结果（含 UTF-8 BOM，Excel 直接打开不乱码）。</div>
+    </div>
+
+    <div id="pane-ch" class="hide">
+      <div class="scroll"><table id="tCh"></table></div>
+      <div class="note">潜在增益 = 交付实际 ×（上一档单价 − 当前档位单价）；缺口为按下一档达成率门槛反算的锁单台数缺口，缺口越小、增益越高越值得优先冲刺。</div>
+    </div>
+
+    <div id="pane-rf" class="hide">
+      <div class="scroll" style="margin-bottom:14px"><table id="tRf"></table></div>
+      <div class="note">退订率 = 退订数 ÷ 对应月份新增锁单数；按零售高级经理维度加权汇总。当前 11月1日核算与 27年1月1日回看数据一致。</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const DATA = [{"rg":"华南大区","pv":"广东省","ct":"汕尾市","rm":"胡浩","dm":"赵全建","nm":"合作伙伴-汕尾市-余雪棠","tp":"合作伙伴","lt":19,"la":36,"lr":1.894736842105263,"rk":1,"tr":1500,"gp":null,"dt":19,"da":27,"dr":1.4210526315789473,"iv":40500,"sw":"是","a8n":27,"a8c":4,"a8r":0.14814814814814814,"s9n":39,"s9c":2,"s9r":0.05128205128205128,"b8n":27,"b8c":4,"b8r":0.14814814814814814,"c9n":39,"c9c":2,"c9r":0.05128205128205128},{"rg":"华南大区","pv":"广东省","ct":"潮州市","rm":"熊俊晖(代)","dm":"赵全建","nm":"合作伙伴-潮州市-彭战葵","tp":"合作伙伴","lt":17,"la":27,"lr":1.588235294117647,"rk":2,"tr":1500,"gp":null,"dt":15,"da":23,"dr":1.5333333333333334,"iv":34500,"sw":"是","a8n":19,"a8c":1,"a8r":0.05263157894736842,"s9n":27,"s9c":0,"s9r":0,"b8n":19,"b8c":1,"b8r":0.05263157894736842,"c9n":27,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"海南省","ct":"三亚市","rm":"李博恩","dm":"陈焕友","nm":"合作伙伴-三亚市-邢益宝","tp":"合作伙伴","lt":34,"la":44,"lr":1.2941176470588236,"rk":3,"tr":1500,"gp":null,"dt":19,"da":43,"dr":2.263157894736842,"iv":64500,"sw":"是","a8n":50,"a8c":6,"a8r":0.12,"s9n":49,"s9c":6,"s9r":0.12244897959183673,"b8n":50,"b8c":6,"b8r":0.12,"c9n":49,"c9c":6,"c9r":0.12244897959183673},{"rg":"华南大区","pv":"广东省","ct":"东莞市","rm":"方任昊","dm":"赵全建","nm":"合作伙伴-东莞市-张义","tp":"合作伙伴","lt":47,"la":56,"lr":1.1914893617021276,"rk":4,"tr":1000,"gp":1,"dt":43,"da":48,"dr":1.1162790697674418,"iv":48000,"sw":"是","a8n":40,"a8c":4,"a8r":0.1,"s9n":59,"s9c":0,"s9r":0,"b8n":40,"b8c":4,"b8r":0.1,"c9n":59,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"湛江市","rm":"庄文迪","dm":"陈焕友","nm":"合作伙伴-湛江市-陆岳夫","tp":"合作伙伴","lt":79,"la":90,"lr":1.139240506329114,"rk":5,"tr":1000,"gp":5,"dt":76,"da":87,"dr":1.144736842105263,"iv":87000,"sw":"是","a8n":76,"a8c":11,"a8r":0.14473684210526316,"s9n":91,"s9c":2,"s9r":0.02197802197802198,"b8n":76,"b8c":11,"b8r":0.14473684210526316,"c9n":91,"c9c":2,"c9r":0.02197802197802198},{"rg":"华南大区","pv":"广东省","ct":"阳江市","rm":"庄文迪","dm":"陈焕友","nm":"合作伙伴-阳江市-许金美","tp":"合作伙伴","lt":35,"la":36,"lr":1.0285714285714285,"rk":6,"tr":1000,"gp":6,"dt":27,"da":43,"dr":1.5925925925925926,"iv":43000,"sw":"是","a8n":43,"a8c":4,"a8r":0.09302325581395349,"s9n":36,"s9c":0,"s9r":0,"b8n":43,"b8c":4,"b8r":0.09302325581395349,"c9n":36,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"东莞市","rm":"方任昊","dm":"赵全建","nm":"合作伙伴-东莞市-彭飞","tp":"合作伙伴","lt":92,"la":93,"lr":1.0108695652173914,"rk":7,"tr":1000,"gp":18,"dt":83,"da":101,"dr":1.216867469879518,"iv":101000,"sw":"是","a8n":84,"a8c":6,"a8r":0.07142857142857142,"s9n":97,"s9c":3,"s9r":0.030927835051546393,"b8n":84,"b8c":6,"b8r":0.07142857142857142,"c9n":97,"c9c":3,"c9r":0.030927835051546393},{"rg":"华南大区","pv":"广东省","ct":"梅州市","rm":"熊俊晖(代)","dm":"赵全建","nm":"合作伙伴-梅州市-余雪棠","tp":"合作伙伴","lt":0,"la":3,"lr":1,"rk":8,"tr":1000,"gp":0,"dt":0,"da":2,"dr":1,"iv":2000,"sw":"是","a8n":null,"a8c":null,"a8r":null,"s9n":3,"s9c":0,"s9r":0,"b8n":null,"b8c":null,"b8r":null,"c9n":3,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"汕头市","rm":"熊俊晖","dm":"张帅","nm":"合作伙伴-汕头市-刘晓斌","tp":"合作伙伴","lt":45,"la":44,"lr":0.9777777777777777,"rk":9,"tr":500,"gp":1,"dt":35,"da":36,"dr":1.0285714285714285,"iv":18000,"sw":"是","a8n":47,"a8c":8,"a8r":0.1702127659574468,"s9n":42,"s9c":1,"s9r":0.023809523809523808,"b8n":47,"b8c":8,"b8r":0.1702127659574468,"c9n":42,"c9c":1,"c9r":0.023809523809523808},{"rg":"华南大区","pv":"海南省","ct":"海口市","rm":"李博恩","dm":"陈焕友","nm":"合作伙伴-海口市-林廷武","tp":"合作伙伴","lt":197,"la":192,"lr":0.9746192893401016,"rk":10,"tr":500,"gp":5,"dt":126,"da":156,"dr":1.2380952380952381,"iv":78000,"sw":"是","a8n":165,"a8c":17,"a8r":0.10303030303030303,"s9n":245,"s9c":13,"s9r":0.053061224489795916,"b8n":165,"b8c":17,"b8r":0.10303030303030303,"c9n":245,"c9c":13,"c9r":0.053061224489795916},{"rg":"华南大区","pv":"广东省","ct":"珠海市","rm":"秦启超","dm":"容方立","nm":"合作伙伴-珠海市-姚映仿","tp":"合作伙伴","lt":55,"la":51,"lr":0.9272727272727272,"rk":11,"tr":500,"gp":4,"dt":48,"da":48,"dr":1,"iv":24000,"sw":"是","a8n":59,"a8c":3,"a8r":0.05084745762711865,"s9n":52,"s9c":0,"s9r":0,"b8n":59,"b8c":3,"b8r":0.05084745762711865,"c9n":52,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"广州市","rm":"黄伟峰","dm":"容方立","nm":"合作伙伴-广州市-李安东","tp":"合作伙伴","lt":27,"la":24,"lr":0.8888888888888888,"rk":12,"tr":500,"gp":3,"dt":22,"da":25,"dr":1.1363636363636365,"iv":12500,"sw":"是","a8n":24,"a8c":1,"a8r":0.041666666666666664,"s9n":24,"s9c":0,"s9r":0,"b8n":24,"b8c":1,"b8r":0.041666666666666664,"c9n":24,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"海南省","ct":"儋州市","rm":"李博恩","dm":"陈焕友","nm":"合作伙伴-儋州市-林廷武","tp":"合作伙伴","lt":9,"la":8,"lr":0.8888888888888888,"rk":13,"tr":500,"gp":1,"dt":3,"da":7,"dr":2.3333333333333335,"iv":3500,"sw":"是","a8n":1,"a8c":0,"a8r":0,"s9n":8,"s9c":0,"s9r":0,"b8n":1,"b8c":0,"b8r":0,"c9n":8,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"佛山市","rm":"余子恩","dm":"容方立","nm":"合作伙伴-佛山市-江黎明","tp":"合作伙伴","lt":93,"la":81,"lr":0.8709677419354839,"rk":14,"tr":500,"gp":12,"dt":75,"da":90,"dr":1.2,"iv":45000,"sw":"是","a8n":85,"a8c":4,"a8r":0.047058823529411764,"s9n":78,"s9c":0,"s9r":0,"b8n":85,"b8c":4,"b8r":0.047058823529411764,"c9n":78,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"佛山市","rm":"余子恩","dm":"容方立","nm":"合作伙伴-佛山市-周怀忠","tp":"合作伙伴","lt":70,"la":60,"lr":0.8571428571428571,"rk":15,"tr":500,"gp":10,"dt":61,"da":50,"dr":0.819672131147541,"iv":25000,"sw":"是","a8n":67,"a8c":0,"a8r":0,"s9n":58,"s9c":0,"s9r":0,"b8n":67,"b8c":0,"b8r":0,"c9n":58,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"广州市","rm":"黄伟峰","dm":"容方立","nm":"合作伙伴-广州市-陈纪雄","tp":"合作伙伴","lt":80,"la":68,"lr":0.85,"rk":16,"tr":500,"gp":12,"dt":68,"da":66,"dr":0.9705882352941176,"iv":33000,"sw":"是","a8n":84,"a8c":11,"a8r":0.13095238095238096,"s9n":62,"s9c":1,"s9r":0.016129032258064516,"b8n":84,"b8c":11,"b8r":0.13095238095238096,"c9n":62,"c9c":1,"c9r":0.016129032258064516},{"rg":"华南大区","pv":"海南省","ct":"海口市","rm":"李博恩","dm":"陈焕友","nm":"合作伙伴-海口市-严小强","tp":"合作伙伴","lt":90,"la":75,"lr":0.8333333333333334,"rk":17,"tr":500,"gp":15,"dt":54,"da":74,"dr":1.3703703703703705,"iv":37000,"sw":"是","a8n":56,"a8c":10,"a8r":0.17857142857142858,"s9n":74,"s9c":2,"s9r":0.02702702702702703,"b8n":56,"b8c":10,"b8r":0.17857142857142858,"c9n":74,"c9c":2,"c9r":0.02702702702702703},{"rg":"华南大区","pv":"海南省","ct":"海口市","rm":"李博恩","dm":"陈焕友","nm":"合作伙伴-海口市-谢世能","tp":"合作伙伴","lt":57,"la":47,"lr":0.8245614035087719,"rk":18,"tr":500,"gp":10,"dt":35,"da":55,"dr":1.5714285714285714,"iv":27500,"sw":"是","a8n":37,"a8c":4,"a8r":0.10810810810810811,"s9n":49,"s9c":0,"s9r":0,"b8n":37,"b8c":4,"b8r":0.10810810810810811,"c9n":49,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"河源市","rm":"熊俊晖","dm":"张帅","nm":"合作伙伴-河源市-陈国斌","tp":"合作伙伴","lt":51,"la":42,"lr":0.8235294117647058,"rk":19,"tr":500,"gp":9,"dt":36,"da":33,"dr":0.9166666666666666,"iv":16500,"sw":"是","a8n":55,"a8c":5,"a8r":0.09090909090909091,"s9n":49,"s9c":2,"s9r":0.04081632653061224,"b8n":55,"b8c":5,"b8r":0.09090909090909091,"c9n":49,"c9c":2,"c9r":0.04081632653061224},{"rg":"华南大区","pv":"广东省","ct":"江门市","rm":"余子恩","dm":"容方立","nm":"合作伙伴-江门市-周怀忠","tp":"合作伙伴","lt":65,"la":52,"lr":0.8,"rk":20,"tr":500,"gp":13,"dt":56,"da":43,"dr":0.7678571428571429,"iv":21500,"sw":"否","a8n":60,"a8c":7,"a8r":0.11666666666666667,"s9n":51,"s9c":2,"s9r":0.0392156862745098,"b8n":60,"b8c":7,"b8r":0.11666666666666667,"c9n":51,"c9c":2,"c9r":0.0392156862745098},{"rg":"华南大区","pv":"广东省","ct":"中山市","rm":"秦启超","dm":"容方立","nm":"合作伙伴-中山市-钟浩林","tp":"合作伙伴","lt":18,"la":14,"lr":0.7777777777777778,"rk":21,"tr":0,"gp":1,"dt":19,"da":15,"dr":0.7894736842105263,"iv":0,"sw":"否","a8n":16,"a8c":0,"a8r":0,"s9n":14,"s9c":0,"s9r":0,"b8n":16,"b8c":0,"b8r":0,"c9n":14,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"海南省","ct":"文昌市","rm":"李博恩","dm":"陈焕友","nm":"合作伙伴-文昌市-林廷武","tp":"合作伙伴","lt":4,"la":3,"lr":0.75,"rk":22,"tr":0,"gp":1,"dt":1,"da":3,"dr":3,"iv":0,"sw":"是","a8n":1,"a8c":0,"a8r":0,"s9n":3,"s9c":0,"s9r":0,"b8n":1,"b8c":0,"b8r":0,"c9n":3,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"广州市","rm":"黄伟峰","dm":"容方立","nm":"直营店-广州市-肖强","tp":"直营店","lt":291,"la":214,"lr":0.7353951890034365,"rk":23,"tr":0,"gp":19,"dt":235,"da":159,"dr":0.676595744680851,"iv":0,"sw":"否","a8n":202,"a8c":35,"a8r":0.17326732673267325,"s9n":199,"s9c":5,"s9r":0.02512562814070352,"b8n":202,"b8c":35,"b8r":0.17326732673267325,"c9n":199,"c9c":5,"c9r":0.02512562814070352},{"rg":"华南大区","pv":"广东省","ct":"东莞市","rm":"方任昊","dm":"赵全建","nm":"合作伙伴-东莞市-陈震华","tp":"合作伙伴","lt":32,"la":23,"lr":0.71875,"rk":24,"tr":0,"gp":3,"dt":26,"da":23,"dr":0.8846153846153846,"iv":0,"sw":"是","a8n":18,"a8c":2,"a8r":0.1111111111111111,"s9n":24,"s9c":1,"s9r":0.041666666666666664,"b8n":18,"b8c":2,"b8r":0.1111111111111111,"c9n":24,"c9c":1,"c9r":0.041666666666666664},{"rg":"华南大区","pv":"广东省","ct":"汕头市","rm":"熊俊晖","dm":"张帅","nm":"合作伙伴-汕头市-董大隆","tp":"合作伙伴","lt":38,"la":27,"lr":0.7105263157894737,"rk":25,"tr":0,"gp":4,"dt":33,"da":38,"dr":1.1515151515151516,"iv":0,"sw":"是","a8n":45,"a8c":2,"a8r":0.044444444444444446,"s9n":28,"s9c":1,"s9r":0.03571428571428571,"b8n":45,"b8c":2,"b8r":0.044444444444444446,"c9n":28,"c9c":1,"c9r":0.03571428571428571},{"rg":"华南大区","pv":"广东省","ct":"云浮市","rm":"庄文迪","dm":"陈焕友","nm":"合作伙伴-云浮市-谭德生","tp":"合作伙伴","lt":34,"la":24,"lr":0.7058823529411765,"rk":26,"tr":0,"gp":4,"dt":27,"da":21,"dr":0.7777777777777778,"iv":0,"sw":"否","a8n":16,"a8c":2,"a8r":0.125,"s9n":25,"s9c":1,"s9r":0.04,"b8n":16,"b8c":2,"b8r":0.125,"c9n":25,"c9c":1,"c9r":0.04},{"rg":"华南大区","pv":"广东省","ct":"深圳市","rm":"罗捷","dm":"张帅","nm":"合作伙伴-深圳市-吴博","tp":"合作伙伴","lt":164,"la":112,"lr":0.6829268292682927,"rk":27,"tr":0,"gp":20,"dt":133,"da":103,"dr":0.7744360902255639,"iv":0,"sw":"否","a8n":134,"a8c":21,"a8r":0.15671641791044777,"s9n":130,"s9c":1,"s9r":0.007692307692307693,"b8n":134,"b8c":21,"b8r":0.15671641791044777,"c9n":130,"c9c":1,"c9r":0.007692307692307693},{"rg":"华南大区","pv":"广东省","ct":"茂名市","rm":"庄文迪","dm":"陈焕友","nm":"合作伙伴-茂名市-陈纪雄","tp":"合作伙伴","lt":50,"la":34,"lr":0.68,"rk":28,"tr":0,"gp":6,"dt":36,"da":33,"dr":0.9166666666666666,"iv":0,"sw":"是","a8n":45,"a8c":1,"a8r":0.022222222222222223,"s9n":36,"s9c":0,"s9r":0,"b8n":45,"b8c":1,"b8r":0.022222222222222223,"c9n":36,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"广州市","rm":"熊俊晖","dm":"张帅","nm":"合作伙伴-广州市-董大隆","tp":"合作伙伴","lt":110,"la":74,"lr":0.6727272727272727,"rk":29,"tr":0,"gp":14,"dt":89,"da":79,"dr":0.8876404494382022,"iv":0,"sw":"是","a8n":85,"a8c":8,"a8r":0.09411764705882353,"s9n":81,"s9c":5,"s9r":0.06172839506172839,"b8n":85,"b8c":8,"b8r":0.09411764705882353,"c9n":81,"c9c":5,"c9r":0.06172839506172839},{"rg":"华南大区","pv":"广东省","ct":"佛山市","rm":"余子恩","dm":"容方立","nm":"合作伙伴-佛山市-陈震华","tp":"合作伙伴","lt":85,"la":57,"lr":0.6705882352941176,"rk":30,"tr":0,"gp":11,"dt":72,"da":49,"dr":0.6805555555555556,"iv":0,"sw":"否","a8n":67,"a8c":5,"a8r":0.07462686567164178,"s9n":57,"s9c":0,"s9r":0,"b8n":67,"b8c":5,"b8r":0.07462686567164178,"c9n":57,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"东莞市","rm":"方任昊","dm":"赵全建","nm":"合作伙伴-东莞市-黄志泉","tp":"合作伙伴","lt":88,"la":57,"lr":0.6477272727272727,"rk":31,"tr":0,"gp":14,"dt":68,"da":50,"dr":0.7352941176470589,"iv":0,"sw":"否","a8n":63,"a8c":5,"a8r":0.07936507936507936,"s9n":58,"s9c":0,"s9r":0,"b8n":63,"b8c":5,"b8r":0.07936507936507936,"c9n":58,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"惠州市","rm":"胡浩","dm":"赵全建","nm":"合作伙伴-惠州市-余雪棠","tp":"合作伙伴","lt":90,"la":57,"lr":0.6333333333333333,"rk":32,"tr":0,"gp":15,"dt":74,"da":58,"dr":0.7837837837837838,"iv":0,"sw":"否","a8n":57,"a8c":10,"a8r":0.17543859649122806,"s9n":60,"s9c":2,"s9r":0.03333333333333333,"b8n":57,"b8c":10,"b8r":0.17543859649122806,"c9n":60,"c9c":2,"c9r":0.03333333333333333},{"rg":"华南大区","pv":"广东省","ct":"肇庆市","rm":"庄文迪","dm":"陈焕友","nm":"合作伙伴-肇庆市-陈纪雄","tp":"合作伙伴","lt":42,"la":23,"lr":0.5476190476190477,"rk":33,"tr":0,"gp":11,"dt":38,"da":33,"dr":0.868421052631579,"iv":0,"sw":"是","a8n":33,"a8c":2,"a8r":0.06060606060606061,"s9n":25,"s9c":0,"s9r":0,"b8n":33,"b8c":2,"b8r":0.06060606060606061,"c9n":25,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"惠州市","rm":"胡浩","dm":"赵全建","nm":"合作伙伴-惠州市-黄志泉","tp":"合作伙伴","lt":109,"la":59,"lr":0.5412844036697247,"rk":34,"tr":0,"gp":29,"dt":92,"da":52,"dr":0.5652173913043478,"iv":0,"sw":"否","a8n":97,"a8c":7,"a8r":0.07216494845360824,"s9n":59,"s9c":0,"s9r":0,"b8n":97,"b8c":7,"b8r":0.07216494845360824,"c9n":59,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"珠海市","rm":"秦启超","dm":"容方立","nm":"合作伙伴-珠海市-余绍雄","tp":"合作伙伴","lt":45,"la":24,"lr":0.5333333333333333,"rk":35,"tr":0,"gp":12,"dt":41,"da":27,"dr":0.6585365853658537,"iv":0,"sw":"否","a8n":34,"a8c":1,"a8r":0.029411764705882353,"s9n":25,"s9c":1,"s9r":0.04,"b8n":34,"b8c":1,"b8r":0.029411764705882353,"c9n":25,"c9c":1,"c9r":0.04},{"rg":"华南大区","pv":"广东省","ct":"深圳市","rm":"贾迪赫","dm":"张帅","nm":"合作伙伴-深圳市-肖汉明","tp":"合作伙伴","lt":75,"la":40,"lr":0.5333333333333333,"rk":36,"tr":0,"gp":20,"dt":60,"da":31,"dr":0.5166666666666667,"iv":0,"sw":"否","a8n":52,"a8c":7,"a8r":0.1346153846153846,"s9n":44,"s9c":2,"s9r":0.045454545454545456,"b8n":52,"b8c":7,"b8r":0.1346153846153846,"c9n":44,"c9c":2,"c9r":0.045454545454545456},{"rg":"华南大区","pv":"广东省","ct":"中山市","rm":"秦启超","dm":"容方立","nm":"合作伙伴-中山市-陈纪雄","tp":"合作伙伴","lt":62,"la":32,"lr":0.5161290322580645,"rk":37,"tr":0,"gp":18,"dt":49,"da":34,"dr":0.6938775510204082,"iv":0,"sw":"否","a8n":52,"a8c":1,"a8r":0.019230769230769232,"s9n":31,"s9c":1,"s9r":0.03225806451612903,"b8n":52,"b8c":1,"b8r":0.019230769230769232,"c9n":31,"c9c":1,"c9r":0.03225806451612903},{"rg":"华南大区","pv":"广东省","ct":"佛山市","rm":"余子恩","dm":"容方立","nm":"合作伙伴-佛山市-叶伟刚","tp":"合作伙伴","lt":93,"la":48,"lr":0.5161290322580645,"rk":38,"tr":0,"gp":27,"dt":80,"da":70,"dr":0.875,"iv":0,"sw":"是","a8n":74,"a8c":1,"a8r":0.013513513513513514,"s9n":51,"s9c":0,"s9r":0,"b8n":74,"b8c":1,"b8r":0.013513513513513514,"c9n":51,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"清远市","rm":"熊俊晖","dm":"张帅","nm":"合作伙伴-清远市-董大隆","tp":"合作伙伴","lt":32,"la":16,"lr":0.5,"rk":39,"tr":0,"gp":10,"dt":29,"da":15,"dr":0.5172413793103449,"iv":0,"sw":"否","a8n":39,"a8c":3,"a8r":0.07692307692307693,"s9n":25,"s9c":0,"s9r":0,"b8n":39,"b8c":3,"b8r":0.07692307692307693,"c9n":25,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"梅州市","rm":"熊俊晖(代)","dm":"赵全建","nm":"合作伙伴-梅州市-赖俊东","tp":"合作伙伴","lt":26,"la":13,"lr":0.5,"rk":40,"tr":0,"gp":8,"dt":23,"da":16,"dr":0.6956521739130435,"iv":0,"sw":"否","a8n":16,"a8c":0,"a8r":0,"s9n":14,"s9c":1,"s9r":0.07142857142857142,"b8n":16,"b8c":0,"b8r":0,"c9n":14,"c9c":1,"c9r":0.07142857142857142},{"rg":"华南大区","pv":"广东省","ct":"深圳市","rm":"贾迪赫","dm":"张帅","nm":"合作伙伴-深圳市-林廷武","tp":"合作伙伴","lt":76,"la":38,"lr":0.5,"rk":41,"tr":0,"gp":23,"dt":54,"da":48,"dr":0.8888888888888888,"iv":0,"sw":"是","a8n":60,"a8c":9,"a8r":0.15,"s9n":41,"s9c":0,"s9r":0,"b8n":60,"b8c":9,"b8r":0.15,"c9n":41,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"韶关市","rm":"胡浩","dm":"赵全建","nm":"合作伙伴-韶关市-江黎明","tp":"合作伙伴","lt":26,"la":13,"lr":0.5,"rk":42,"tr":0,"gp":8,"dt":19,"da":18,"dr":0.9473684210526315,"iv":0,"sw":"否","a8n":25,"a8c":8,"a8r":0.32,"s9n":13,"s9c":1,"s9r":0.07692307692307693,"b8n":25,"b8c":8,"b8r":0.32,"c9n":13,"c9c":1,"c9r":0.07692307692307693},{"rg":"华南大区","pv":"广东省","ct":"江门市","rm":"余子恩","dm":"容方立","nm":"合作伙伴-江门市-陈宗烓","tp":"合作伙伴","lt":39,"la":16,"lr":0.41025641025641024,"rk":43,"tr":0,"gp":16,"dt":34,"da":17,"dr":0.5,"iv":0,"sw":"否","a8n":16,"a8c":0,"a8r":0,"s9n":15,"s9c":0,"s9r":0,"b8n":16,"b8c":0,"b8r":0,"c9n":15,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"中山市","rm":"秦启超","dm":"容方立","nm":"合作伙伴-中山市-张艳振","tp":"合作伙伴","lt":32,"la":13,"lr":0.40625,"rk":44,"tr":0,"gp":13,"dt":30,"da":15,"dr":0.5,"iv":0,"sw":"否","a8n":16,"a8c":1,"a8r":0.0625,"s9n":13,"s9c":0,"s9r":0,"b8n":16,"b8c":1,"b8r":0.0625,"c9n":13,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"揭阳市","rm":"熊俊晖(代)","dm":"赵全建","nm":"合作伙伴-揭阳市-彭战葵","tp":"合作伙伴","lt":40,"la":14,"lr":0.35,"rk":45,"tr":0,"gp":18,"dt":30,"da":20,"dr":0.6666666666666666,"iv":0,"sw":"否","a8n":33,"a8c":3,"a8r":0.09090909090909091,"s9n":14,"s9c":0,"s9r":0,"b8n":33,"b8c":3,"b8r":0.09090909090909091,"c9n":14,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"海南省","ct":"定安县","rm":"李博恩","dm":"陈焕友","nm":"合作伙伴-定安县-严小强","tp":"合作伙伴","lt":3,"la":1,"lr":0.3333333333333333,"rk":46,"tr":0,"gp":2,"dt":1,"da":0,"dr":0,"iv":0,"sw":"否","a8n":1,"a8c":0,"a8r":0,"s9n":1,"s9c":0,"s9r":0,"b8n":1,"b8c":0,"b8r":0,"c9n":1,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"海南省","ct":"琼海市","rm":"李博恩","dm":"陈焕友","nm":"合作伙伴-琼海市-林廷武","tp":"合作伙伴","lt":4,"la":1,"lr":0.25,"rk":47,"tr":0,"gp":3,"dt":1,"da":1,"dr":1,"iv":0,"sw":"是","a8n":null,"a8c":null,"a8r":null,"s9n":1,"s9c":0,"s9r":0,"b8n":null,"b8c":null,"b8r":null,"c9n":1,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"广东省","ct":"江门市","rm":"余子恩","dm":"容方立","nm":"合作伙伴-江门市-江黎明","tp":"合作伙伴","lt":3,"la":0,"lr":0,"rk":48,"tr":0,"gp":3,"dt":2,"da":0,"dr":0,"iv":0,"sw":"否","a8n":null,"a8c":null,"a8r":null,"s9n":null,"s9c":null,"s9r":null,"b8n":null,"b8c":null,"b8r":null,"c9n":null,"c9c":null,"c9r":null},{"rg":"华南大区","pv":"广东省","ct":"东莞市","rm":"方任昊","dm":"赵全建","nm":"合作伙伴-东莞市-唐玉华","tp":"合作伙伴","lt":39,"la":0,"lr":0,"rk":49,"tr":0,"gp":32,"dt":34,"da":0,"dr":0,"iv":0,"sw":"否","a8n":null,"a8c":null,"a8r":null,"s9n":null,"s9c":null,"s9r":null,"b8n":null,"b8c":null,"b8r":null,"c9n":null,"c9c":null,"c9r":null},{"rg":"华南大区","pv":"海南省","ct":"万宁市","rm":"李博恩","dm":"陈焕友","nm":"合作伙伴-万宁市-邢益宝","tp":"合作伙伴","lt":2,"la":0,"lr":0,"rk":50,"tr":0,"gp":2,"dt":1,"da":0,"dr":0,"iv":0,"sw":"否","a8n":null,"a8c":null,"a8r":null,"s9n":null,"s9c":null,"s9r":null,"b8n":null,"b8c":null,"b8r":null,"c9n":null,"c9c":null,"c9r":null},{"rg":"华南大区","pv":"广东省","ct":"深圳市","rm":"罗捷&贾迪赫","dm":"张帅","nm":"合作伙伴-深圳市-高亮","tp":"合作伙伴","lt":0,"la":0,"lr":0,"rk":51,"tr":0,"gp":0,"dt":0,"da":0,"dr":0,"iv":0,"sw":"否","a8n":null,"a8c":null,"a8r":null,"s9n":null,"s9c":null,"s9r":null,"b8n":null,"b8c":null,"b8r":null,"c9n":null,"c9c":null,"c9r":null},{"rg":"华南大区","pv":"海南省","ct":"陵水黎族自治县","rm":"李博恩","dm":"陈焕友","nm":"合作伙伴-陵水黎族自治县-邢益宝","tp":"合作伙伴","lt":3,"la":0,"lr":0,"rk":52,"tr":0,"gp":3,"dt":1,"da":0,"dr":0,"iv":0,"sw":"否","a8n":null,"a8c":null,"a8r":null,"s9n":null,"s9c":null,"s9r":null,"b8n":null,"b8c":null,"b8r":null,"c9n":null,"c9c":null,"c9r":null},{"rg":"华南大区","pv":"海南省","ct":"澄迈县","rm":"李博恩","dm":"陈焕友","nm":"合作伙伴-澄迈县-林廷武","tp":"合作伙伴","lt":4,"la":0,"lr":0,"rk":53,"tr":0,"gp":4,"dt":1,"da":0,"dr":0,"iv":0,"sw":"否","a8n":1,"a8c":0,"a8r":0,"s9n":4,"s9c":0,"s9r":0,"b8n":1,"b8c":0,"b8r":0,"c9n":4,"c9c":0,"c9r":0},{"rg":"华南大区","pv":"海南省","ct":"东方市","rm":"李博恩","dm":"陈焕友","nm":"合作伙伴-东方市-邢益宝","tp":"合作伙伴","lt":3,"la":0,"lr":0,"rk":54,"tr":0,"gp":3,"dt":1,"da":0,"dr":0,"iv":0,"sw":"否","a8n":1,"a8c":0,"a8r":0,"s9n":null,"s9c":null,"s9r":null,"b8n":1,"b8c":0,"b8r":0,"c9n":null,"c9c":null,"c9r":null},{"rg":"华南大区","pv":"海南省","ct":"临高县","rm":"李博恩","dm":"陈焕友","nm":"合作伙伴-临高县-谢世能","tp":"合作伙伴","lt":3,"la":0,"lr":0,"rk":55,"tr":0,"gp":3,"dt":1,"da":0,"dr":0,"iv":0,"sw":"否","a8n":2,"a8c":0,"a8r":0,"s9n":null,"s9c":null,"s9r":null,"b8n":2,"b8c":0,"b8r":0,"c9n":null,"c9c":null,"c9r":null}];
+const TIERS = [1500,1000,500,0];
+const NEXT_TIER = {0:500, 500:1000, 1000:1500, 1500:null};
+
+/* ---------- 工具 ---------- */
+const fmtInt = n => (n===null||n===undefined) ? '—' : Math.round(n).toLocaleString('zh-CN');
+const fmtM   = n => (n===null||n===undefined) ? '—' : '¥' + Math.round(n).toLocaleString('zh-CN');
+const fmtP   = n => (n===null||n===undefined) ? '—' : (n*100).toFixed(1) + '%';
+function rate(a,t){ if(a===null||a===undefined||!t) return t===0 && a>0 ? 1 : (a===0?0:null); return a/t; }
+function toneRate(v){ return v===null?'':v>=1?'r-hi':v>=0.8?'r-md':'r-lo'; }
+function toneRefund(v){ return v===null?'':v>0.2?'r-hi':v>0.1?'r-md':'r-lo'; }
+function tierBadge(t){ const c={1500:'b1500',1000:'b1000',500:'b500',0:'b0'}[t]||'b0';
+  return '<span class="badge '+c+'">'+(t?t+'元/台':(t===0?'0档':'—'))+'</span>'; }
+
+/* ---------- 状态 ---------- */
+const state = {rm:new Set(), pv:'', ct:'', tp:'', tr:'', sw:'', q:''};
+const sort  = {rm:{k:'iv',d:-1}, dt:{k:'rk',d:1}, ch:{k:'gain',d:-1}, rf:{k:'iv',d:-1}};
+
+function filtered(){
+  return DATA.filter(d=>{
+    if(state.rm.size && !state.rm.has(d.rm)) return false;
+    if(state.pv && d.pv!==state.pv) return false;
+    if(state.ct && d.ct!==state.ct) return false;
+    if(state.tp && d.tp!==state.tp) return false;
+    if(state.tr!=='' && d.tr!==Number(state.tr)) return false;
+    if(state.sw && d.sw!==state.sw) return false;
+    if(state.q){ const q=state.q.toLowerCase();
+      if(!((d.nm||'').toLowerCase().includes(q)||(d.ct||'').includes(q)||(d.rm||'').includes(q)||(d.dm||'').includes(q))) return false; }
+    return true;
+  });
+}
+const gainOf = d => { const nx = NEXT_TIER[d.tr]; return nx===null||nx===undefined ? 0 : (d.da||0)*(nx-d.tr); };
+
+function byRm(rows){
+  const mp = new Map();
+  rows.forEach(d=>{
+    let o = mp.get(d.rm);
+    if(!o){ o={rm:d.rm,n:0,lt:0,la:0,dt:0,da:0,iv:0,swOk:0,tiers:{1500:0,1000:0,500:0,0:0},gap:0,gain:0,a8n:0,a8c:0,s9n:0,s9c:0}; mp.set(d.rm,o); }
+    o.n++; o.lt+=d.lt||0; o.la+=d.la||0; o.dt+=d.dt||0; o.da+=d.da||0; o.iv+=d.iv||0;
+    if(d.sw==='是') o.swOk++;
+    o.tiers[d.tr] = (o.tiers[d.tr]||0)+1;
+    if(d.gp) o.gap += d.gp;
+    o.gain += gainOf(d);
+    o.a8n+=d.a8n||0; o.a8c+=d.a8c||0; o.s9n+=d.s9n||0; o.s9c+=d.s9c||0;
+  });
+  const arr=[...mp.values()].map(o=>{ o.lr=rate(o.la,o.lt); o.dr=rate(o.da,o.dt); o.swRate=o.n?o.swOk/o.n:null;
+    o.a8r=o.a8n?o.a8c/o.a8n:null; o.s9r=o.s9n?o.s9c/o.s9n:null; return o; });
+  return arr;
+}
+
+/* ---------- 表格渲染 ---------- */
+function renderTable(el, rows, cols, st, foot){
+  let head = '<thead><tr>' + cols.map(c=>
+    '<th class="'+(c.cls||'')+'" data-key="'+(c.nosort?'':c.k)+'">'+c.t+(st.k===c.k?'<span class="ar">'+(st.d<0?'▼':'▲')+'</span>':'')+'</th>'
+  ).join('') + '</tr></thead>';
+  const sorted = rows.slice().sort((a,b)=>{
+    const va=a[st.k], vb=b[st.k];
+    if(typeof va==='string'||typeof vb==='string') return String(va??'').localeCompare(String(vb??''),'zh')*st.d;
+    return ((va??-1e18)-(vb??-1e18))*st.d;
+  });
+  let body = '<tbody>' + sorted.map(r=>'<tr>'+cols.map(c=>{
+    const raw = r[c.k];
+    const val = c.f ? c.f(raw, r) : (raw===null||raw===undefined ? '—' : (typeof raw==='number' ? fmtInt(raw) : raw));
+    let cls = (c.cls||'') + ' num';
+    if(c.tone) cls += ' ' + c.tone(raw, r);
+    return '<td class="'+cls+'">'+val+'</td>';
+  }).join('')+'</tr>').join('');
+  if(foot) body += '<tr class="tot">'+cols.map(c=>{
+    const v = foot[c.k];
+    const val = c.f ? c.f(v, foot) : (v===null||v===undefined ? '' : (typeof v==='number' ? fmtInt(v) : v));
+    return '<td class="'+(c.cls||'')+' num">'+val+'</td>';
+  }).join('')+'</tr>';
+  body += '</tbody>';
+  el.innerHTML = head + body;
+  el.querySelectorAll('th').forEach(th=>{
+    th.onclick = ()=>{ const k=th.dataset.key; if(!k) return;
+      if(st.k===k) st.d=-st.d; else {st.k=k; st.d=-1;}
+      render(); };
+  });
+}
+
+/* ---------- 各模块 ---------- */
+const RM_COLS = [
+  {k:'rm',t:'零售高级经理',cls:'left',f:v=>v||'—'},
+  {k:'n',t:'主体数'},
+  {k:'lt',t:'锁单目标'},
+  {k:'la',t:'锁单实际'},
+  {k:'lr',t:'锁单达成率',f:fmtP,tone:v=>toneRate(v)},
+  {k:'dt',t:'交付目标'},
+  {k:'da',t:'交付实际'},
+  {k:'dr',t:'交付达成率',f:fmtP,tone:v=>toneRate(v)},
+  {k:'tiers',t:'档位分布 (1500/1000/500/0)',cls:'left',nosort:true,f:o=>TIERS.map(t=>{
+      const c={1500:'b1500',1000:'b1000',500:'b500',0:'b0'}[t];
+      return '<span class="badge '+c+'">'+(o[t]||0)+'</span>'; }).join(' ')},
+  {k:'iv',t:'预估返利',f:fmtM},
+  {k:'share',t:'金额占比',f:fmtP},
+  {k:'swRate',t:'开关项达成率',f:fmtP,tone:v=>toneRate(v)},
+  {k:'gap',t:'距下一档缺口(台)'},
+  {k:'gain',t:'升档潜在增益',f:fmtM}
+];
+
+const DT_COLS = [
+  {k:'rk',t:'名次'},
+  {k:'nm',t:'同城市同实际控制人',cls:'left'},
+  {k:'tp',t:'类型',cls:'left'},
+  {k:'ct',t:'城市',cls:'left'},
+  {k:'rm',t:'零售高级经理',cls:'left'},
+  {k:'dm',t:'交付经理',cls:'left'},
+  {k:'lt',t:'锁单目标'},
+  {k:'la',t:'锁单实际'},
+  {k:'lr',t:'锁单达成率',f:fmtP,tone:v=>toneRate(v)},
+  {k:'tr',t:'档位',cls:'left',f:tierBadge},
+  {k:'gp',t:'缺口'},
+  {k:'dt',t:'交付目标'},
+  {k:'da',t:'交付实际'},
+  {k:'dr',t:'交付达成率',f:fmtP,tone:v=>toneRate(v)},
+  {k:'iv',t:'预估返利',f:fmtM},
+  {k:'sw',t:'开关项',cls:'left',f:v=>'<span class="badge '+(v==='是'?'byes':'bno')+'">'+v+'</span>'},
+  {k:'a8n',t:'8月新增锁单'},
+  {k:'a8c',t:'8月退订'},
+  {k:'a8r',t:'8月退订率',f:fmtP,tone:v=>toneRefund(v)},
+  {k:'s9n',t:'9月新增锁单'},
+  {k:'s9c',t:'9月退订'},
+  {k:'s9r',t:'9月退订率',f:fmtP,tone:v=>toneRefund(v)}
+];
+
+const CH_COLS = [
+  {k:'nm',t:'同城市同实际控制人',cls:'left'},
+  {k:'ct',t:'城市',cls:'left'},
+  {k:'rm',t:'零售高级经理',cls:'left'},
+  {k:'tr',t:'当前档位',cls:'left',f:tierBadge},
+  {k:'nx',t:'目标档位',cls:'left',f:v=>tierBadge(v)},
+  {k:'lr',t:'锁单达成率',f:fmtP,tone:v=>toneRate(v)},
+  {k:'gp',t:'缺口(台)'},
+  {k:'da',t:'交付实际'},
+  {k:'gain',t:'潜在增益',f:fmtM},
+  {k:'eff',t:'单台缺口增益(元/台)',f:v=>fmtM(v)}
+];
+
+const RF_COLS = [
+  {k:'rm',t:'零售高级经理',cls:'left'},
+  {k:'n',t:'主体数'},
+  {k:'a8n',t:'8月新增锁单'},
+  {k:'a8c',t:'8月退订'},
+  {k:'a8r',t:'8月退订率',f:fmtP,tone:v=>toneRefund(v)},
+  {k:'s9n',t:'9月新增锁单'},
+  {k:'s9c',t:'9月退订'},
+  {k:'s9r',t:'9月退订率',f:fmtP,tone:v=>toneRefund(v)},
+  {k:'iv',t:'预估返利',f:fmtM}
+];
+
+function render(){
+  const rows = filtered();
+  const agg  = byRm(rows);
+  const totI = rows.reduce((s,d)=>s+(d.iv||0),0);
+  const totLt = rows.reduce((s,d)=>s+(d.lt||0),0), totLa = rows.reduce((s,d)=>s+(d.la||0),0);
+  const totDt = rows.reduce((s,d)=>s+(d.dt||0),0), totDa = rows.reduce((s,d)=>s+(d.da||0),0);
+  const totGain = rows.reduce((s,d)=>s+gainOf(d),0);
+  const totGap  = rows.reduce((s,d)=>s+(d.gp||0),0);
+  const swOk = rows.filter(d=>d.sw==='是').length;
+  const tierCnt = {1500:0,1000:0,500:0,0:0}, tierMoney = {1500:0,1000:0,500:0,0:0};
+  rows.forEach(d=>{ tierCnt[d.tr]=(tierCnt[d.tr]||0)+1; tierMoney[d.tr]=(tierMoney[d.tr]||0)+(d.iv||0); });
+  const riskIv = rows.filter(d=>d.sw==='否').reduce((s,d)=>s+(d.iv||0),0);
+
+  /* KPI */
+  document.getElementById('kpiHint').textContent = '当前筛选：' + rows.length + ' 个主体 / ' + agg.length + ' 位零售高级经理';
+  document.getElementById('kpis').innerHTML = [
+    ['主体数（家）', fmtInt(rows.length), '有档位 ' + fmtInt(rows.length-(tierCnt[0]||0)) + ' 家 · 0档 ' + fmtInt(tierCnt[0]||0) + ' 家', ''],
+    ['锁单达成率', fmtP(rate(totLa,totLt)), '目标 ' + fmtInt(totLt) + ' · 实际 ' + fmtInt(totLa), rate(totLa,totLt)>=1?'ok':'warn'],
+    ['交付达成率', fmtP(rate(totDa,totDt)), '目标 ' + fmtInt(totDt) + ' · 实际 ' + fmtInt(totDa), rate(totDa,totDt)>=1?'ok':'warn'],
+    ['预估返利总额', fmtM(totI), '档位加权合计 · 均 ' + fmtM(rows.length?totI/rows.length:0) + '/主体', 'money'],
+    ['开关项达成率', fmtP(rows.length?swOk/rows.length:null), swOk + ' / ' + rows.length + ' 家达成 · 风险金额 ' + fmtM(riskIv), swOk===rows.length?'ok':'warn'],
+    ['升档潜在增益', fmtM(totGain), '缺口合计 ' + fmtInt(totGap) + ' 台 · 可冲刺主体 ' + fmtInt(rows.filter(d=>NEXT_TIER[d.tr]!==null&&NEXT_TIER[d.tr]!==undefined).length) + ' 家', 'money']
+  ].map(k=>'<div class="kpi '+k[3]+'"><div class="k">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="d">'+k[2]+'</div></div>').join('');
+
+  /* 洞察 */
+  const top = agg.slice().sort((a,b)=>b.iv-a.iv);
+  const zero = rows.filter(d=>d.tr===0);
+  document.getElementById('insights').innerHTML = [
+    '当前口径下 <b>'+rows.length+'</b> 个主体预估返利合计 <b>'+fmtM(totI)+'</b>，锁单整体达成 '+fmtP(rate(totLa,totLt))+'、B10&amp;C10交付整体达成 '+fmtP(rate(totDa,totDt))+'。',
+    top.length ? '返利金额前三的零售高级经理：<b>'+top.slice(0,3).map(o=>o.rm+'（'+fmtM(o.iv)+'）').join('、')+'</b>，合计占 ' + fmtP(totI? top.slice(0,3).reduce((s,o)=>s+o.iv,0)/totI : null) + '。' : '当前筛选无数据。',
+    '档位结构：1500档 <b>'+(tierCnt[1500]||0)+'</b> 家、1000档 <b>'+(tierCnt[1000]||0)+'</b> 家、500档 <b>'+(tierCnt[500]||0)+'</b> 家、0档（无返利）<b>'+(tierCnt[0]||0)+'</b> 家。',
+    '开关项未达成 <b>'+(rows.length-swOk)+'</b> 家，涉及返利 <b>'+fmtM(riskIv)+'</b>；需重点复核交付达成率与退订率是否触线。',
+    '若按缺口补齐锁单升档，可新增返利 <b>'+fmtM(totGain)+'</b>（合计需补 '+fmtInt(totGap)+' 台），其中 0档主体 '+fmtInt(zero.length)+' 家是主要增量来源。'
+  ].map(s=>'<li>'+s+'</li>').join('');
+
+  /* 条形图 */
+  const maxIv = Math.max(1, ...agg.map(o=>o.iv));
+  document.getElementById('bars').innerHTML = top.map(o=>{
+    const w = Math.max(2, o.iv/maxIv*100);
+    return '<div class="bar"><div class="nm">'+o.rm+'</div>'+
+      '<div class="track"><div class="fill" style="width:'+w+'%"></div></div>'+
+      '<div class="val">'+fmtM(o.iv)+'</div>'+
+      '<div class="ex">'+o.n+'家 · 锁单'+fmtP(o.lr)+(o.lr>=1.2?' · 1500档占比'+fmtP(o.tiers[1500]/o.n):'')+'</div></div>';
+  }).join('') || '<div class="muted">当前筛选无数据</div>';
+
+  /* 档位结构 */
+  const color = {1500:'#b8860b',1000:'#1e40af',500:'#0e7490',0:'#9ca3af'};
+  const mk = (obj, tot, fmt) => TIERS.map(t=>{
+    const v = obj[t]||0; const p = tot? v/tot*100 : 0;
+    return p>0 ? '<span style="width:'+p+'%;background:'+color[t]+'">'+(p>6?(fmt?fmt(v):v):'')+'</span>' : '';
+  }).join('');
+  const totN = rows.length || 1;
+  document.getElementById('stackN').innerHTML = mk(tierCnt, totN, null);
+  document.getElementById('stackM').innerHTML = mk(tierMoney, totI||1, v=>fmtM(v));
+  document.getElementById('legend').innerHTML = TIERS.map(t=>
+    '<span><i style="background:'+color[t]+'"></i>'+(t?t+'元/台':'0档')+'：'+(tierCnt[t]||0)+' 家 · '+fmtM(tierMoney[t]||0)+' · '+
+    fmtP(totI?(tierMoney[t]||0)/totI:null)+'</span>').join('');
+
+  /* 表 */
+  const withShare = agg.map(o=>({...o, share: totI? o.iv/totI : null}));
+  const footRm = {rm:'合计/加权', n:rows.length, lt:totLt, la:totLa, lr:rate(totLa,totLt), dt:totDt, da:totDa,
+    dr:rate(totDa,totDt), tiers:tierCnt, iv:totI, share:1, swRate: rows.length?swOk/rows.length:null, gap:totGap, gain:totGain};
+  renderTable(document.getElementById('tRm'), withShare, RM_COLS, sort.rm, footRm);
+  renderTable(document.getElementById('tDt'), rows, DT_COLS, sort.dt, null);
+
+  const chances = rows.filter(d=>NEXT_TIER[d.tr]!==null && NEXT_TIER[d.tr]!==undefined).map(d=>{
+    const g = gainOf(d);
+    return {...d, nx:NEXT_TIER[d.tr], gain:g, eff: (d.gp? g/d.gp : (g>0? g : 0))};
+  });
+  const footCh = {nm:'合计', ct:'', rm:'', tr:'', nx:'', lr:rate(totLa,totLt), gp:totGap,
+    da: chances.reduce((s,d)=>s+(d.da||0),0), gain:totGain, eff: totGap? totGain/totGap : null};
+  renderTable(document.getElementById('tCh'), chances, CH_COLS, sort.ch, footCh);
+
+  const rfRows = agg.map(o=>({...o}));
+  const footRf = {rm:'合计/加权', n:rows.length,
+    a8n:agg.reduce((s,o)=>s+o.a8n,0), a8c:agg.reduce((s,o)=>s+o.a8c,0),
+    a8r:(()=>{const a=agg.reduce((s,o)=>s+o.a8n,0); return a? agg.reduce((s,o)=>s+o.a8c,0)/a : null;})(),
+    s9n:agg.reduce((s,o)=>s+o.s9n,0), s9c:agg.reduce((s,o)=>s+o.s9c,0),
+    s9r:(()=>{const a=agg.reduce((s,o)=>s+o.s9n,0); return a? agg.reduce((s,o)=>s+o.s9c,0)/a : null;})(),
+    iv:totI};
+  renderTable(document.getElementById('tRf'), rfRows, RF_COLS, sort.rf, footRf);
+}
+
+/* ---------- 交互 ---------- */
+function initFilters(){
+  const rms = [...new Set(DATA.map(d=>d.rm))].sort((a,b)=>a.localeCompare(b,'zh'));
+  document.getElementById('rmChips').innerHTML = rms.map(m=>'<span class="chip" data-rm="'+m+'">'+m+'</span>').join('');
+  document.querySelectorAll('#rmChips .chip').forEach(c=>{
+    c.onclick = ()=>{ const m=c.dataset.rm;
+      if(state.rm.has(m)){ state.rm.delete(m); c.classList.remove('on'); }
+      else { state.rm.add(m); c.classList.add('on'); }
+      render(); };
+  });
+  const pvs = [...new Set(DATA.map(d=>d.pv))];
+  document.getElementById('fPv').innerHTML = '<option value="">全部</option>' + pvs.map(v=>'<option>'+v+'</option>').join('');
+  const tps = [...new Set(DATA.map(d=>d.tp))];
+  document.getElementById('fTp').innerHTML = '<option value="">全部</option>' + tps.map(v=>'<option>'+v+'</option>').join('');
+  const syncCities = ()=>{
+    const cs = [...new Set(DATA.filter(d=>!state.pv||d.pv===state.pv).map(d=>d.ct))].sort((a,b)=>a.localeCompare(b,'zh'));
+    document.getElementById('fCt').innerHTML = '<option value="">全部</option>' + cs.map(v=>'<option>'+v+'</option>').join('');
+    document.getElementById('fCt').value = state.ct;
+  };
+  syncCities();
+  document.getElementById('fPv').onchange = e=>{ state.pv=e.target.value; state.ct=''; syncCities(); render(); };
+  document.getElementById('fCt').onchange = e=>{ state.ct=e.target.value; render(); };
+  document.getElementById('fTp').onchange = e=>{ state.tp=e.target.value; render(); };
+  document.getElementById('fTr').onchange = e=>{ state.tr=e.target.value; render(); };
+  document.getElementById('fSw').onchange = e=>{ state.sw=e.target.value; render(); };
+  let timer; document.getElementById('fQ').oninput = e=>{ clearTimeout(timer); timer=setTimeout(()=>{ state.q=e.target.value.trim(); render(); },200); };
+  document.getElementById('btnReset').onclick = ()=>{
+    state.rm.clear(); state.pv=''; state.ct=''; state.tp=''; state.tr=''; state.sw=''; state.q='';
+    document.querySelectorAll('#rmChips .chip').forEach(c=>c.classList.remove('on'));
+    document.getElementById('fPv').value=''; document.getElementById('fTp').value='';
+    document.getElementById('fTr').value=''; document.getElementById('fSw').value=''; document.getElementById('fQ').value='';
+    syncCities(); render();
+  };
+  document.getElementById('btnExport').onclick = exportCsv;
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.onclick = ()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+      t.classList.add('on');
+      ['rm','dt','ch','rf'].forEach(k=>document.getElementById('pane-'+k).classList.toggle('hide', k!==t.dataset.tab));
+      if(t.dataset.tab==='dt') document.getElementById('btnExport').classList.remove('hide');
+    };
+  });
+}
+
+function exportCsv(){
+  const rows = filtered();
+  const head = ['名次','同城市同实际控制人','类型','省份','城市','零售高级经理','交付经理','锁单目标','锁单实际','锁单达成率',
+    '当前档位','距下一档缺口','交付目标','交付实际','交付达成率','预估返利','开关项','8月新增锁单','8月退订','8月退订率','9月新增锁单','9月退订','9月退订率'];
+  const lines = [head.join(',')].concat(rows.map(d=>[
+    d.rk,d.nm,d.tp,d.pv,d.ct,d.rm,d.dm,d.lt,d.la,(d.lr*100).toFixed(1)+'%',d.tr,d.gp,d.dt,d.da,(d.dr*100).toFixed(1)+'%',
+    d.iv,d.sw,d.a8n,d.a8c,d.a8r==null?'':(d.a8r*100).toFixed(1)+'%',d.s9n,d.s9c,d.s9r==null?'':(d.s9r*100).toFixed(1)+'%'
+  ].map(v=>{
+    if(v===null||v===undefined) return '';
+    const s=String(v); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(',')));
+  const blob = new Blob(['\ufeff'+lines.join('\r\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'B10C10返利明细_2026-09.csv';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+document.getElementById('sameCnt').textContent = DATA.filter(d=>
+  (d.a8n===d.b8n)&&(d.a8c===d.b8c)&&(d.s9n===d.c9n)&&(d.s9c===d.c9c)).length + '/' + DATA.length;
+initFilters();
+render();
+</script>
+</body>
+</html>
